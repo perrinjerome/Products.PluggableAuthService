@@ -1043,6 +1043,16 @@ class PluggableAuthService(Folder, Cacheable):
         return value.strip().lower()
 
     @security.private
+    def strip(self, value):
+        """ Transform for login name.
+
+        Strip the value.
+
+        To use this, set login_tranform to 'strip'.
+        """
+        return value.strip()
+
+    @security.private
     def upper(self, value):
         """ Transform for login name.
 

@@ -1385,6 +1385,34 @@ class PluggableAuthServiceTests(unittest.TestCase, IUserFolder_conformance,
         self.assertFalse(zcuf._verifyUser(plugins, login='Foobar'))
         self.assertFalse(zcuf._verifyUser(plugins, login='foobar'))
 
+    def test__verifyUser_login_transform_strip(self):
+
+        from ..interfaces.plugins import IUserEnumerationPlugin
+
+        plugins = self._makePlugins()
+        zcuf = self._makeOne(plugins)
+        zcuf.login_transform = 'strip'
+
+        enumerator = DummyMultiUserEnumerator(
+            'enumerator',
+            {'id': 'Foo', 'login': 'foobar'},)
+        directlyProvides(enumerator, IUserEnumerationPlugin)
+        zcuf._setObject('enumerator', enumerator)
+
+        plugins = zcuf._getOb('plugins')
+
+        plugins.activatePlugin(IUserEnumerationPlugin, 'enumerator')
+
+        # No matter what we try as login parameter, it is always upper
+        # cased before verifying a user.
+        self.assertTrue(zcuf._verifyUser(plugins, login='foobar')['id'] == 'Foo')
+        self.assertTrue(zcuf._verifyUser(plugins, login=' foobar')['id'] == 'Foo')
+        self.assertTrue(zcuf._verifyUser(plugins, login='foobar ')['id'] == 'Foo')
+        self.assertTrue(zcuf._verifyUser(plugins, login=' foobar ')['id'] == 'Foo')
+        self.assertTrue(zcuf._verifyUser(plugins, login='\tfoobar')['id'] == 'Foo')
+        self.assertTrue(zcuf._verifyUser(plugins, login='\tfoobar\r\n')['id'] == 'Foo')
+        self.assertFalse(zcuf._verifyUser(plugins, login='foo bar'))
+
     def test__findUser_no_plugins(self):
 
         plugins = self._makePlugins()
